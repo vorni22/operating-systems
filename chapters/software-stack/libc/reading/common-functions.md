@@ -7,22 +7,23 @@ The simple attempt is to implement these functions (`printf()` or `strcpy()` or 
 This saves us time (we don't have to reimplement) and allows us to constantly improve one implementation constantly;
 there will only be one implementation that we update to increase its safety, efficiency or performance.
 
-The `chapters/software-stack/libc/drills/tasks/common-functions/support` folder stores the implementation of string management functions, in `string.c` and `string.h` and of printing functions in `printf.c` and `printf.h`.
+Go to `chapters/software-stack/libc/drills/tasks/common-functions/` and run `make skels`.
+The `support/` folder stores the implementation of string management functions, in `os_string.c` and `os_string.h` and of printing functions in `printf.c` and `printf.h`.
 The `printf()` implementation is [this one](https://github.com/mpaland/printf).
 
 There are two programs: `main_string.c` showcases string management functions, `main_printf.c` showcases the `printf()` function.
 
-`main_string.c` depends on the `string.h` and `string.c` files that implement the `strlen()` and `strcpy()` functions.
+`main_string.c` depends on the `os_string.h` and `os_string.c` files that implement the `os_strlen()` and `os_strcpy()` functions.
 We print messages using the `write()` system call wrapper implemented in `syscall.s`
 
 Let's build and run the program:
 
 ```console
 student@os:~/.../common-functions/support$ make main_string
-gcc -fno-stack-protector   -c -o main_string.o main_string.c
-gcc -fno-stack-protector   -c -o string.o string.c
+gcc -fno-PIC -fno-stack-protector   -c -o main_string.o main_string.c
+gcc -fno-PIC -fno-stack-protector   -c -o os_string.o os_string.c
 nasm -f elf64 -o syscall.o syscall.s
-gcc -nostdlib -no-pie -Wl,--entry=main -Wl,--build-id=none  main_string.o string.o syscall.o   -o main_string
+gcc -nostdlib -no-pie -Wl,--entry=main -Wl,--build-id=none main_string.o os_string.o syscall.o -o main_string
 
 student@os:~/.../common-functions/support$ ./main_string
 Destination string is: warhammer40k
@@ -37,7 +38,7 @@ exit(0)                                 = ?
 ```
 
 When using `strace` we see that only the `write()` system call wrapper triggers a system call.
-There are no system calls triggered by `strlen()` and `strcpy()` as can be seen in their implementation.
+There are no system calls triggered by `os_strlen()` and `os_strcpy()` as can be seen in their implementation.
 
 In addition, `main_printf.c` depends on the `printf.h` and `printf.c` files that implement the `printf()` function.
 There is a requirement to implement the `_putchar()` function;
@@ -49,8 +50,9 @@ Let's build and run the program:
 
 ```console
 student@os:~/.../common-functions/support$ make main_printf
-gcc -fno-stack-protector   -c -o printf.o printf.c
-gcc -nostdlib -no-pie -Wl,--entry=main -Wl,--build-id=none  main_printf.o printf.o string.o syscall.o   -o main_printf
+gcc -fno-PIC -fno-stack-protector   -c -o main_printf.o main_printf.c
+gcc -fno-PIC -fno-stack-protector   -c -o printf.o printf.c
+gcc -no-pie  main_printf.o printf.o syscall.o   -o main_printf
 
 student@os:~/.../common-functions/support$ ./main_printf
 [before] src is at 00000000004026A0, len is 12, content: "warhammer40k"
@@ -60,7 +62,7 @@ copying src to dest
 [after] dest is at 0000000000603000, len is 12, content: "warhammer40k"
 
 student@os:~/.../common-functions/support$ strace ./main_printf
-execve("./main_printf", ["./main_printf"], 0x7ffcaaa1d660 /- 63 vars */) = 0
+[...]
 write(1, "[", 1[)                        = 1
 write(1, "b", 1b)                        = 1
 write(1, "e", 1e)                        = 1
@@ -69,9 +71,6 @@ write(1, "o", 1o)                        = 1
 write(1, "r", 1r)                        = 1
 write(1, "e", 1e)                        = 1
 write(1, "]", 1])                        = 1
-write(1, " ", 1 )                        = 1
-write(1, "s", 1s)                        = 1
-write(1, "r", 1r)                        = 1
 [...]
 ```
 
