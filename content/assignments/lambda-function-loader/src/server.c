@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <stdio.h>
+#define __USE_XOPEN2K8
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -46,8 +47,11 @@ static int lib_load(struct lib *lib)
 static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
+
+	int output_file = mkstemp(OUTPUT_TEMPLATE);
+
 	void *raw_function_ptr = NULL;
-	int output_file = open(lib->outputfile, "w");
+	//int output_file = open(lib->outputfile, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 
 	raw_function_ptr = dlsym(lib->handle, lib->funcname);
 	char *error = dlerror();
