@@ -43,8 +43,6 @@ static int lib_prehooks(struct lib *lib)
 static int lib_load(struct lib *lib)
 {
 	/* TODO: Implement lib_load(). */
-	printf("lib: %s\n", lib->libname);
-
 	void *handle = dlopen(lib->libname, RTLD_LAZY);
 	if (!handle) {
 		fprintf(stderr, "Dinamic library %s could not be found, closing with error:\n", lib->libname);
@@ -62,15 +60,11 @@ static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
 
-	printf("Executing\n");
-
 	char path[strlen(OUTPUT_TEMPLATE) + 1];
 	path[strlen(OUTPUT_TEMPLATE)] = 0;
 	memcpy(path, OUTPUT_TEMPLATE, strlen(OUTPUT_TEMPLATE));
 
 	int output_file = mkstemp(path);
-
-	printf("fd = %d, %s\n", output_file, path);
 
 	memcpy(lib->outputfile, path, strlen(path) + 1);
 
@@ -166,7 +160,7 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 }
 
 void* connection_thread(void *args) {
-	printf("Connection created!\n");
+	//printf("Connection created!\n");
 
 	int socketfd = *(int *) args;
 
@@ -175,7 +169,7 @@ void* connection_thread(void *args) {
 
 	ssize_t rec = recv_socket(socketfd, buf, BUFSIZ);
 
-	printf("[Server]: Recived message: %s\n", buf);
+	//printf("[Server]: Recived message: %s\n", buf);
 
 	if (rec <= 0) {
 		close_socket(socketfd);
@@ -213,21 +207,21 @@ int main(void)
 
 	listenfd = create_listener();
 
-	printf("Listener with fd = %d\n", listenfd);
+	//printf("Listener with fd = %d\n", listenfd);
 
 	while (1) {
-		printf("Waiting for connection\n");
+		//printf("Waiting for connection\n");
 		int connectfd = accept(listenfd, NULL, NULL);
 		if (connectfd < 0) {
 			char *err = strerror(errno);
-			printf("error [accept()]: %s\n", err);
+			fprintf(stderr, "error [accept()]: %s\n", err);
 			return;
 		}
 
 		int* args = calloc(1, sizeof(int));
 		*args = connectfd;
 
-		printf("Connection found!\n");
+		//printf("Connection found!\n");
 		pthread_t thread_id;
 		pthread_create(&thread_id, NULL, connection_thread, args);
 

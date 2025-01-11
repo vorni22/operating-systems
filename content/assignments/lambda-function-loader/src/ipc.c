@@ -29,20 +29,20 @@ int create_listener() {
 
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (fd < 0) {
-		printf("Errors at socket()\n");
+		fprintf(stderr, "Errors at socket()\n");
 	}
 
 	rc = bind(fd, (struct sockaddr *) &addr, sizeof(addr));
 	if (rc < 0) {
 		char *err = strerror(errno);
-		printf("error [bind()]: %s\n", err);
+		fprintf(stderr, "error [bind()]: %s\n", err);
 		return;
 	}
 
 	rc = listen(fd, MAX_CLIENTS);
 	if (rc < 0) {
 		char *err = strerror(errno);
-		printf("error [listen()]: %s\n", err);
+		fprintf(stderr, "error [listen()]: %s\n", err);
 		return;
 	}
 
@@ -55,7 +55,7 @@ int create_socket(void) {
 
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (fd < 0) {
-		printf("Errors at socket()\n");
+		fprintf(stderr, "Errors at socket()\n");
 	}
 }
 
