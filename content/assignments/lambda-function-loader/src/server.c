@@ -157,10 +157,8 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 	return ret;
 }
 
-void* connection_thread(void *args) {
+void* connection_proc(int socketfd) {
 	//printf("Connection created!\n");
-
-	int socketfd = *(int *) args;
 
 	char buf[BUFSIZ];
 	int ret;
@@ -171,8 +169,8 @@ void* connection_thread(void *args) {
 
 	if (rec <= 0) {
 		close_socket(socketfd);
-		free(args);
-		return NULL;
+		
+		exit(0);
 	}
 
 	struct lib lib;
@@ -182,8 +180,8 @@ void* connection_thread(void *args) {
 
 	if (ret < 0) {
 		close_socket(socketfd);
-		free(args);
-		return NULL;
+		
+		exit(0);
 	}
 
 	ret = lib_run(&lib);
@@ -192,9 +190,9 @@ void* connection_thread(void *args) {
 	}
 	send_socket(socketfd, lib.outputfile, strlen(lib.outputfile));
 
-	free(args);
-
 	close_socket(socketfd);
+
+	exit(0);
 }
 
 int main(void)
@@ -216,14 +214,16 @@ int main(void)
 			return;
 		}
 
-		int* args = calloc(1, sizeof(int));
-		*args = connectfd;
-
 		//printf("Connection found!\n");
-		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, connection_thread, args);
+		
+		int pid = fork();
 
-		pthread_detach(thread_id);
+		if (pid < 0) {
+			exit(1);
+		}
+		if (pid == 0) {
+			connection_proc(connectfd);
+		}
 	}
 
 	close_socket(listenfd);
