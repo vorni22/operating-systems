@@ -87,7 +87,7 @@ static int lib_execute(struct lib *lib)
 		fprintf(stderr, "Error creating new process, returning");
 		return -1;
 	} else if (!pid) {
-		int stdout_copy = dup(STDOUT_FILENO);
+		//int stdout_copy = dup(STDOUT_FILENO);
 		dup2(output_file, STDOUT_FILENO);
 		if (lib->filename[0] == 0) {
 			void (*function_ptr)(void) = (void (*)(void))raw_function_ptr;  // Cursed line number 1
@@ -96,6 +96,7 @@ static int lib_execute(struct lib *lib)
 			void (*function_ptr)(const char *) = (void (*)(const char *))raw_function_ptr; // Cursed line number 2
 			(*function_ptr)(lib->filename);
 		}
+		close(output_file);
 		exit(EXIT_SUCCESS);
 		/* Return standard output to it's original fd */
 	} else {
@@ -192,6 +193,8 @@ void* connection_proc(int socketfd) {
 
 	close_socket(socketfd);
 
+	close(lib.output_fd);
+
 	exit(0);
 }
 
@@ -224,6 +227,8 @@ int main(void)
 		if (pid == 0) {
 			connection_proc(connectfd);
 		}
+
+		close(connectfd);
 	}
 
 	close_socket(listenfd);
