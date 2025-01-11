@@ -52,8 +52,6 @@ static int lib_load(struct lib *lib)
 	/* TODO: Implement lib_load(). */
 	void *handle = dlopen(lib->libname, RTLD_LAZY);
 	if (!handle) {
-		dprintf(lib->output_fd, "Dinamic library %s could not be found, closing with error:\n", lib->libname);
-		dprintf(lib->output_fd, "%s\n", dlerror());
 		return -1;
 	}
 
@@ -104,7 +102,8 @@ static int lib_execute(struct lib *lib)
 		int status;
 		waitpid(pid, &status, 0);
 		if (!WIFEXITED(status)){
-			dprintf(output_file, "Error : %s could not be executed\n", lib->funcname);
+			//dprintf(output_file, "Error : %s could not be executed\n", lib->funcname);
+			return -1;
 		}
 	}
 	return 0;
@@ -121,8 +120,6 @@ static int lib_close(struct lib *lib)
 static int lib_posthooks(struct lib *lib)
 {
 	/* TODO: Implement lib_posthooks(). */
-	close(lib->output_fd);
-	
 	return 0;
 }
 
@@ -190,7 +187,9 @@ void* connection_thread(void *args) {
 	}
 
 	ret = lib_run(&lib);
-
+	if (ret < 0) {
+		dprintf(lib.output_fd, "Error: %s could not be executed.\n", buf);
+	}
 	send_socket(socketfd, lib.outputfile, strlen(lib.outputfile));
 
 	free(args);
