@@ -25,18 +25,59 @@ static int lib_prehooks(struct lib *lib)
 static int lib_load(struct lib *lib)
 {
 	/* TODO: Implement lib_load(). */
+	void *handle = dlopen(lib->libname, RTLD_LAZY);
+	if (!handle) {
+		fprintf(stderr, "Dinamic library %s could not be found, closing with error:\n", lib->libname);
+		fprintf(stderr, "%s\n", dlerror());
+		return -1;
+	}
+
+	dlerror();	/* Clear existing errors */
+
+	lib->handle = handle;
 	return 0;
 }
 
 static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
+	void *raw_function_ptr = NULL;
+	int output_file = open(lib->outputfile, "w");
+
+	raw_function_ptr = dlsym(lib->handle, lib->funcname);
+	char *error = dlerror();
+
+	if (error) {
+		fprintf(stderr, "%s\n", error);
+		return -1;
+	}
+	dlerror();   /* Clear existing errors */
+
+	/* Redirect output of the function to the file */
+	int stdout_copy = dup(STDOUT_FILENO);
+	dup2(output_file, STDOUT_FILENO);
+
+	if (lib->filename == NULL) {
+		void (*function_ptr)(void) = (void (*)(void))raw_function_ptr;  // Cursed line number 1
+		(*function_ptr)();
+	} else {
+		void (*function_ptr)(const char *) = (void (*)(const char *))raw_function_ptr; // Cursed line number 2
+		(*function_ptr)(lib->filename);
+	}
+
+	/* Return standard output to it's original fd */
+	dup2(stdout_copy, output_file);
+	close(stdout_copy);
+	close(output_file);
+
 	return 0;
 }
 
 static int lib_close(struct lib *lib)
 {
 	/* TODO: Implement lib_close(). */
+	dlclose(lib->handle);
+
 	return 0;
 }
 
