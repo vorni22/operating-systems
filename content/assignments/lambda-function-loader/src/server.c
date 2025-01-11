@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <pthread.h>
 #include <sys/un.h>
+#include <errno.h>
 
 #include "ipc.h"
 #include "server.h"
@@ -126,12 +127,16 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 }
 
 void* connection_thread(void *args) {
+	printf("Connection created!\n");
+
 	int socketfd = *(int *) args;
 
 	char buf[BUFSIZ];
 	int ret;
 
 	ssize_t rec = recv_socket(socketfd, buf, BUFSIZ);
+
+	printf("[Server]: Recived message: %s\n", buf);
 
 	if (rec <= 0) {
 		close_socket(socketfd);
@@ -155,6 +160,8 @@ void* connection_thread(void *args) {
 	}
 
 	free(args);
+
+	close_socket(socketfd);
 }
 
 int main(void)
@@ -163,25 +170,30 @@ int main(void)
 	int ret, listenfd;
 	int rc;
 
-	int listenfd = create_socket();
+	listenfd = create_listener();
 
-	rc = bind(listenfd, NULL, NULL);
-
-	rc = listen(listenfd, MAX_CLIENTS);
+	printf("Listener with fd = %d\n", listenfd);
 
 	while (1) {
+		printf("Waiting for connection\n");
 		int connectfd = accept(listenfd, NULL, NULL);
-		if (connectfd < 0)
-			continue;
+		if (connectfd < 0) {
+			char *err = strerror(errno);
+			printf("error [accept()]: %s\n", err);
+			return;
+		}
 
 		int* args = calloc(1, sizeof(int));
 		*args = connectfd;
 
+		printf("Connection found!\n");
 		pthread_t thread_id;
 		pthread_create(&thread_id, NULL, connection_thread, args);
 
 		pthread_detach(thread_id);
 	}
+
+	close_socket(listenfd);
 
 	return 0;
 }

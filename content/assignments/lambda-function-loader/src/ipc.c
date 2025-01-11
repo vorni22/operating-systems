@@ -7,6 +7,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <errno.h>
+
 #include "ipc.h"
 
 int curr_id = 0;
@@ -21,22 +23,61 @@ struct sockaddr_un get_sockaddr(const char *path) {
 	return addr;
 }
 
+int create_listener() {
+	struct sockaddr_un addr = get_sockaddr(SOCKET_NAME);
+
+	remove(SOCKET_LISTENER);
+	int fd, rc;
+
+	fd = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (fd < 0) {
+		printf("Errors at socket()\n");
+	}
+
+	rc = bind(fd, (struct sockaddr *) &addr, sizeof(addr));
+	if (rc < 0) {
+		char *err = strerror(errno);
+		printf("error [bind()]: %s\n", err);
+		return;
+	}
+
+	rc = listen(fd, MAX_CLIENTS);
+	if (rc < 0) {
+		char *err = strerror(errno);
+		printf("error [listen()]: %s\n", err);
+		return;
+	}
+
+	return fd;
+}
+
 int create_socket(void) {
 	struct sockaddr_un addr = get_sockaddr(SOCKET_NAME);
 
 	char socke_path[32];
 
-	sprintf(socke_path, "%s%d", SOCKET_NAME, curr_id++);
+	sprintf(socke_path, "%s_%d", SOCKET_NAME, curr_id++);
 
 	remove(socke_path);
+	int fd;
 
-	int rc, listenfd;
-
-	listenfd = socket(PF_UNIX, SOCK_STREAM, 0);
+	fd = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (fd < 0) {
+		printf("Errors at socket()\n");
+	}
 }
 
 int connect_socket(int fd) {
-	return connect(fd, NULL, NULL);
+	struct sockaddr_un addr = get_sockaddr(SOCKET_LISTENER);
+	char input[BUFSIZ];
+	int sockfd;
+	int rc;
+
+	rc = access(SOCKET_LISTENER, R_OK | W_OK);
+	if (rc < 0)
+		return -1;
+
+	return connect(fd, (struct sockaddr *) &addr, sizeof(addr));
 }
 
 ssize_t send_socket(int fd, const char *buf, size_t len) {
@@ -59,7 +100,9 @@ ssize_t recv_socket(int fd, char *buf, size_t len) {
 	ssize_t recv_bytes = 0;
 
 	while (recv_bytes < len) {
-		int ret = recv(fd, buf, len - recv_bytes, 0);
+		ssize_t ret = recv(fd, buf + recv_bytes, len - recv_bytes, 0);
+
+		break;
 
 		if (ret <= 0)
 			break;
