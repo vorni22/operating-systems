@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <sys/socket.h>
+#include <pthread.h>
+#include <sys/un.h>
+
 #include "ipc.h"
 #include "server.h"
 
@@ -83,13 +87,22 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 int main(void)
 {
 	/* TODO: Implement server connection. */
-	int ret;
+	int ret, listenfd;
 	struct lib lib;
+	int rc;
+
+	int listenfd = create_socket();
+
+	rc = bind(listenfd, NULL, NULL);
+
+	rc = listen(listenfd, 64);
 
 	while (1) {
 		/* TODO - get message from client */
 		/* TODO - parse message with parse_command and populate lib */
 		/* TODO - handle request from client */
+		
+
 		ret = lib_run(&lib);
 	}
 
