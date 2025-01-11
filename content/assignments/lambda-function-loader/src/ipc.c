@@ -11,8 +11,6 @@
 
 #include "ipc.h"
 
-int curr_id = 0;
-
 struct sockaddr_un get_sockaddr(const char *path) {
 	struct sockaddr_un addr;
 
@@ -26,7 +24,7 @@ struct sockaddr_un get_sockaddr(const char *path) {
 int create_listener() {
 	struct sockaddr_un addr = get_sockaddr(SOCKET_NAME);
 
-	remove(SOCKET_LISTENER);
+	remove(SOCKET_NAME);
 	int fd, rc;
 
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -53,12 +51,6 @@ int create_listener() {
 
 int create_socket(void) {
 	struct sockaddr_un addr = get_sockaddr(SOCKET_NAME);
-
-	char socke_path[32];
-
-	sprintf(socke_path, "%s_%d", SOCKET_NAME, curr_id++);
-
-	remove(socke_path);
 	int fd;
 
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
@@ -68,12 +60,12 @@ int create_socket(void) {
 }
 
 int connect_socket(int fd) {
-	struct sockaddr_un addr = get_sockaddr(SOCKET_LISTENER);
+	struct sockaddr_un addr = get_sockaddr(SOCKET_NAME);
 	char input[BUFSIZ];
 	int sockfd;
 	int rc;
 
-	rc = access(SOCKET_LISTENER, R_OK | W_OK);
+	rc = access(SOCKET_NAME, R_OK | W_OK);
 	if (rc < 0)
 		return -1;
 
@@ -97,20 +89,7 @@ ssize_t send_socket(int fd, const char *buf, size_t len) {
 }
 
 ssize_t recv_socket(int fd, char *buf, size_t len) {
-	ssize_t recv_bytes = 0;
-
-	while (recv_bytes < len) {
-		ssize_t ret = recv(fd, buf + recv_bytes, len - recv_bytes, 0);
-
-		break;
-
-		if (ret <= 0)
-			break;
-
-		recv_bytes += ret; 
-	}
-
-	return recv_bytes;
+	return recv(fd, buf, len, 0);
 }
 
 void close_socket(int fd)

@@ -9,7 +9,6 @@
 #define BUFSIZE 1024
 #define MAX_CLIENTS 1024
 #define SOCKET_NAME "/tmp/sohack.socket"
-#define SOCKET_LISTENER "/tmp/sohack.socket"
 
 int create_socket(void);
 int connect_socket(int fd);
