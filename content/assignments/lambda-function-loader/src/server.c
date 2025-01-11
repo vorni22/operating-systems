@@ -113,7 +113,7 @@ static int lib_execute(struct lib *lib)
 		}
 	}
 
-	dup2(stdout_copy, output_file);
+	dup2(stdout_copy, STDOUT_FILENO);
 	close(stdout_copy);
 	close(output_file);
 	return 0;
