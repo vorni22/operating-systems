@@ -166,7 +166,7 @@ void* connection_thread(void *args) {
 	int ret;
 
 	ssize_t rec = recv_socket(socketfd, buf, BUFSIZ);
-
+	buf[rec] = 0;
 	//printf("[Server]: Recived message: %s\n", buf);
 
 	if (rec <= 0) {
