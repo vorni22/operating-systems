@@ -1,0 +1,8 @@
+run
+Connection found!
+Waiting for connection
+Connection created!
+[Server]: Recived message: /home/vorni/Teme/SO/operating-systems/content/assignments/lambda-function-loader/tests/libbasic.so
+lib: /home/vorni/Teme/SO/operating-systems/content/assignments/lambda-function-loader/tests/libbasic.so
+Executing
+fd = 6, /home/vorni/Teme/SO/operating-systems/content/assignments/lambda-function-loader/checker/output/out-nMfSU4

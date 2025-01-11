@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-fPIC -Wall -Wextra
-LDFLAGS=-ldl
+LDFLAGS=-ldl -lpthread
 OUTPUT_DIR=$(abspath ../checker/output/)
 CFLAGS+=-DOUTPUT_TEMPLATE="\"$(OUTPUT_DIR)/out-XXXXXX\""
 LDLIBS=$(abspath ./libipc.so)

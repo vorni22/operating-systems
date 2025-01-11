@@ -22,15 +22,29 @@
 #define OUTPUT_TEMPLATE "../checker/output/out-XXXXXX"
 #endif
 
+void init_lib(struct lib *lib) {
+	lib->filename = calloc(1, BUFSIZ);
+
+	lib->funcname = calloc(1, BUFSIZ);
+	memcpy(lib->funcname, "run", 3);
+
+	lib->libname = calloc(1, BUFSIZ);
+
+	lib->outputfile = calloc(1, BUFSIZ);
+}
+
 static int lib_prehooks(struct lib *lib)
 {
 	/* TODO: Implement lib_prehooks(). */
+
 	return 0;
 }
 
 static int lib_load(struct lib *lib)
 {
 	/* TODO: Implement lib_load(). */
+	printf("lib: %s\n", lib->libname);
+
 	void *handle = dlopen(lib->libname, RTLD_LAZY);
 	if (!handle) {
 		fprintf(stderr, "Dinamic library %s could not be found, closing with error:\n", lib->libname);
@@ -48,7 +62,17 @@ static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
 
-	int output_file = mkstemp(OUTPUT_TEMPLATE);
+	printf("Executing\n");
+
+	char path[strlen(OUTPUT_TEMPLATE) + 1];
+	path[strlen(OUTPUT_TEMPLATE)] = 0;
+	memcpy(path, OUTPUT_TEMPLATE, strlen(OUTPUT_TEMPLATE));
+
+	int output_file = mkstemp(path);
+
+	printf("fd = %d, %s\n", output_file, path);
+
+	memcpy(lib->outputfile, path, strlen(path) + 1);
 
 	void *raw_function_ptr = NULL;
 	//int output_file = open(lib->outputfile, O_CREAT | O_TRUNC | O_WRONLY, 0644);
@@ -57,7 +81,7 @@ static int lib_execute(struct lib *lib)
 	char *error = dlerror();
 
 	if (error) {
-		fprintf(stderr, "%s\n", error);
+		fprintf(stderr, "dlsym: %s\n", error);
 		return -1;
 	}
 	dlerror();   /* Clear existing errors */
@@ -72,7 +96,7 @@ static int lib_execute(struct lib *lib)
 		fprintf(stderr, "Error creating new process, returning");
 		return -1;
 	} else if (!pid) {
-		if (lib->filename == NULL) {
+		if (lib->filename[0] == 0) {
 			void (*function_ptr)(void) = (void (*)(void))raw_function_ptr;  // Cursed line number 1
 			(*function_ptr)();
 		} else {
@@ -162,6 +186,8 @@ void* connection_thread(void *args) {
 	}
 
 	struct lib lib;
+	init_lib(&lib);
+
 	ret = parse_command(buf, lib.libname, lib.funcname, lib.filename);
 
 	if (ret < 0) {
@@ -172,8 +198,8 @@ void* connection_thread(void *args) {
 
 	ret = lib_run(&lib);
 
-	if (ret) {
-		printf("adfa\n");
+	if (!ret) {
+		send_socket(socketfd, lib.outputfile, strlen(lib.outputfile));
 	}
 
 	free(args);
