@@ -2,8 +2,8 @@
 
 #include <dlfcn.h>
 #include <fcntl.h>
+#define __USE_XOPEN2K8 1
 #include <stdio.h>
-#define __USE_XOPEN2K8
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -89,13 +89,13 @@ static int lib_execute(struct lib *lib)
 	/* C has attrocious error handling, so we make a new process for handling exceptions */
 
 	pid_t pid = fork();
-	int stdout_copy = dup(STDOUT_FILENO);
-	dup2(output_file, STDOUT_FILENO);
 
 	if (pid < 0) {
 		fprintf(stderr, "Error creating new process, returning");
 		return -1;
 	} else if (!pid) {
+		int stdout_copy = dup(STDOUT_FILENO);
+		dup2(output_file, STDOUT_FILENO);
 		if (lib->filename[0] == 0) {
 			void (*function_ptr)(void) = (void (*)(void))raw_function_ptr;  // Cursed line number 1
 			(*function_ptr)();
@@ -109,12 +109,10 @@ static int lib_execute(struct lib *lib)
 		int status;
 		waitpid(pid, &status, 0);
 		if (!WIFEXITED(status)){
-			printf("Error : %s could not be executed\n", lib->funcname);
+			dprintf(output_file, "Error : %s could not be executed\n", lib->funcname);
 		}
 	}
-
-	dup2(stdout_copy, STDOUT_FILENO);
-	close(stdout_copy);
+	
 	close(output_file);
 	return 0;
 }
