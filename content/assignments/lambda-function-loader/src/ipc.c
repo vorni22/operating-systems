@@ -40,7 +40,7 @@ int connect_socket(int fd) {
 }
 
 ssize_t send_socket(int fd, const char *buf, size_t len) {
-	size_t send_bytes = 0;
+	ssize_t send_bytes = 0;
 
 	while (send_bytes < len) {
 		int ret = send(fd, buf + send_bytes, len - send_bytes, 0);
@@ -56,7 +56,7 @@ ssize_t send_socket(int fd, const char *buf, size_t len) {
 }
 
 ssize_t recv_socket(int fd, char *buf, size_t len) {
-	size_t recv_bytes = 0;
+	ssize_t recv_bytes = 0;
 
 	while (recv_bytes < len) {
 		int ret = recv(fd, buf, len - recv_bytes, 0);

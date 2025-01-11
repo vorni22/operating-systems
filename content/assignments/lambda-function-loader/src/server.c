@@ -125,30 +125,58 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 	return ret;
 }
 
-void* connection_thread(int socketfd) {
+void* connection_thread(void *args) {
+	int socketfd = *(int *) args;
+
+	char buf[BUFSIZ];
+	int ret;
+
+	ssize_t rec = recv_socket(socketfd, buf, BUFSIZ);
+
+	if (rec <= 0) {
+		close_socket(socketfd);
+		free(args);
+		return NULL;
+	}
+
+	struct lib lib;
+	ret = parse_command(buf, lib.libname, lib.funcname, lib.filename);
+
+	if (ret < 0) {
+		close_socket(socketfd);
+		free(args);
+		return NULL;
+	}
+
 	
+
+	free(args);
 }
 
 int main(void)
 {
 	/* TODO: Implement server connection. */
 	int ret, listenfd;
-	struct lib lib;
 	int rc;
 
 	int listenfd = create_socket();
 
 	rc = bind(listenfd, NULL, NULL);
 
-	rc = listen(listenfd, 64);
+	rc = listen(listenfd, MAX_CLIENTS);
 
 	while (1) {
 		int connectfd = accept(listenfd, NULL, NULL);
 		if (connectfd < 0)
 			continue;
 
+		int* args = calloc(1, sizeof(int));
+		*args = connectfd;
+
 		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, connection_thread, connectfd);
+		pthread_create(&thread_id, NULL, connection_thread, args);
+
+		pthread_detach(thread_id);
 	}
 
 	return 0;
