@@ -9,32 +9,68 @@
 
 #include "ipc.h"
 
+int curr_id = 0;
 
-int create_socket(void)
-{
-	/* TODO: Implement create_socket(). */
-	return -1;
+struct sockaddr_un get_sockaddr(const char *path) {
+	struct sockaddr_un addr;
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	snprintf(addr.sun_path, strlen(path) + 1, "%s", path);
+
+	return addr;
 }
 
-int connect_socket(int fd)
-{
-	/* TODO: Implement connect_socket(). */
-	return -1;
+int create_socket(void) {
+	struct sockaddr_un addr = get_sockaddr(SOCKET_NAME);
+
+	char socke_path[32];
+
+	sprintf(socke_path, "%s%d", SOCKET_NAME, curr_id++);
+
+	remove(socke_path);
+
+	int rc, listenfd;
+
+	listenfd = socket(PF_UNIX, SOCK_STREAM, 0);
 }
 
-ssize_t send_socket(int fd, const char *buf, size_t len)
-{
-	/* TODO: Implement send_socket(). */
-	return -1;
+int connect_socket(int fd) {
+	return connect(fd, NULL, NULL);
 }
 
-ssize_t recv_socket(int fd, char *buf, size_t len)
-{
-	/* TODO: Implement recv_socket(). */
-	return -1;
+ssize_t send_socket(int fd, const char *buf, size_t len) {
+	size_t send_bytes = 0;
+
+	while (send_bytes < len) {
+		int ret = send(fd, buf + send_bytes, len - send_bytes, 0);
+
+		if (send_bytes == 0)
+			break;
+
+		if (ret > 0)
+			send_bytes += ret;
+	}
+
+	return send_bytes;
+}
+
+ssize_t recv_socket(int fd, char *buf, size_t len) {
+	size_t recv_bytes = 0;
+
+	while (recv_bytes < len) {
+		int ret = recv(fd, buf, len - recv_bytes, 0);
+
+		if (ret <= 0)
+			break;
+
+		recv_bytes += ret; 
+	}
+
+	return recv_bytes;
 }
 
 void close_socket(int fd)
 {
-	/* TODO: Implement close_socket(). */
+	int rc = close(fd);
 }
