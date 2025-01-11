@@ -84,6 +84,10 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 	return ret;
 }
 
+void* connection_thread(int socketfd) {
+	
+}
+
 int main(void)
 {
 	/* TODO: Implement server connection. */
@@ -98,12 +102,12 @@ int main(void)
 	rc = listen(listenfd, 64);
 
 	while (1) {
-		/* TODO - get message from client */
-		/* TODO - parse message with parse_command and populate lib */
-		/* TODO - handle request from client */
-		
+		int connectfd = accept(listenfd, NULL, NULL);
+		if (connectfd < 0)
+			continue;
 
-		ret = lib_run(&lib);
+		pthread_t thread_id;
+		pthread_create(&thread_id, NULL, connection_thread, connectfd);
 	}
 
 	return 0;
