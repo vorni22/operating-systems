@@ -74,7 +74,7 @@ static int lib_execute(struct lib *lib)
 	char *error = dlerror();
 
 	if (error) {
-		dprintf(lib->output_fd, "%s\n", error);
+		//dprintf(lib->output_fd, "%s\n", error);
 		return -1;
 	}
 	dlerror();   /* Clear existing errors */
