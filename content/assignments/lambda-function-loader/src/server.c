@@ -148,7 +148,11 @@ void* connection_thread(void *args) {
 		return NULL;
 	}
 
-	
+	ret = lib_run(&lib);
+
+	if (ret) {
+		printf("adfa\n");
+	}
 
 	free(args);
 }
