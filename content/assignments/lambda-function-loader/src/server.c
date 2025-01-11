@@ -36,7 +36,14 @@ void init_lib(struct lib *lib) {
 static int lib_prehooks(struct lib *lib)
 {
 	/* TODO: Implement lib_prehooks(). */
+	char path[strlen(OUTPUT_TEMPLATE) + 1];
+	path[strlen(OUTPUT_TEMPLATE)] = 0;
+	memcpy(path, OUTPUT_TEMPLATE, strlen(OUTPUT_TEMPLATE));
 
+	int output_file = mkstemp(path);
+	lib->output_fd = output_file;
+
+	memcpy(lib->outputfile, path, strlen(path) + 1);
 	return 0;
 }
 
@@ -45,8 +52,8 @@ static int lib_load(struct lib *lib)
 	/* TODO: Implement lib_load(). */
 	void *handle = dlopen(lib->libname, RTLD_LAZY);
 	if (!handle) {
-		fprintf(stderr, "Dinamic library %s could not be found, closing with error:\n", lib->libname);
-		fprintf(stderr, "%s\n", dlerror());
+		dprintf(lib->output_fd, "Dinamic library %s could not be found, closing with error:\n", lib->libname);
+		dprintf(lib->output_fd, "%s\n", dlerror());
 		return -1;
 	}
 
@@ -60,22 +67,16 @@ static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
 
-	char path[strlen(OUTPUT_TEMPLATE) + 1];
-	path[strlen(OUTPUT_TEMPLATE)] = 0;
-	memcpy(path, OUTPUT_TEMPLATE, strlen(OUTPUT_TEMPLATE));
-
-	int output_file = mkstemp(path);
-
-	memcpy(lib->outputfile, path, strlen(path) + 1);
-
 	void *raw_function_ptr = NULL;
 	//int output_file = open(lib->outputfile, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+
+	int output_file = lib->output_fd;
 
 	raw_function_ptr = dlsym(lib->handle, lib->funcname);
 	char *error = dlerror();
 
 	if (error) {
-		fprintf(stderr, "dlsym: %s\n", error);
+		dprintf(lib->output_fd, "%s\n", error);
 		return -1;
 	}
 	dlerror();   /* Clear existing errors */
@@ -106,8 +107,6 @@ static int lib_execute(struct lib *lib)
 			dprintf(output_file, "Error : %s could not be executed\n", lib->funcname);
 		}
 	}
-	
-	close(output_file);
 	return 0;
 }
 
@@ -122,6 +121,8 @@ static int lib_close(struct lib *lib)
 static int lib_posthooks(struct lib *lib)
 {
 	/* TODO: Implement lib_posthooks(). */
+	close(lib->output_fd);
+	
 	return 0;
 }
 
@@ -190,9 +191,7 @@ void* connection_thread(void *args) {
 
 	ret = lib_run(&lib);
 
-	if (!ret) {
-		send_socket(socketfd, lib.outputfile, strlen(lib.outputfile));
-	}
+	send_socket(socketfd, lib.outputfile, strlen(lib.outputfile));
 
 	free(args);
 

@@ -16,6 +16,7 @@ struct lib {
 	char *filename;
 
 	void *handle;
+	int output_fd;
 
 	lambda_func_t run;
 	lambda_param_func_t p_run;
